@@ -128,3 +128,20 @@ chats-all
 .DS_Store
 
 profilepictures/
+
+# Bot runtime data (lokal, nicht für Git)
+messages.json
+pn_text.json
+processed_users.json
+answered_users.json
+channel_groups.json
+bot_config.json
+state.json
+*.json.tmp
+
+# Account-Verzeichnisse (Credentials + User-Daten)
+accounts/
+current_account.txt
+
+# Claude Code
+.claude/

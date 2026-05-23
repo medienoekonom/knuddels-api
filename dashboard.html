@@ -1,0 +1,1697 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Knuddels-Bot Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Fira+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #020617;
+    --panel: #0f172a;
+    --panel-2: #1e293b;
+    --border: #1e293b;
+    --border-hover: #334155;
+    --text: #f8fafc;
+    --text-muted: #94a3b8;
+    --text-dim: #64748b;
+    --ok: #22c55e;
+    --fail: #ef4444;
+    --warn: #f59e0b;
+    --accent: #38bdf8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Fira Sans', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    padding: 24px;
+    min-height: 100vh;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  @media (max-width: 640px) {
+    body { padding: 12px; font-size: 14px; }
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+  .title {
+    font-weight: 600;
+    font-size: 18px;
+    letter-spacing: -0.01em;
+  }
+  .title-sub {
+    font-family: 'Fira Code', monospace;
+    color: var(--text-dim);
+    font-size: 12px;
+    margin-left: 8px;
+  }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Fira Code', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .pulse {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--ok);
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5); }
+    70% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+  }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--panel-2);
+    color: var(--text);
+    border: 1px solid var(--border-hover);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-family: 'Fira Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 200ms ease, border-color 200ms ease;
+  }
+  .btn:hover { background: #2c3a52; border-color: #475569; }
+  .btn:active { transform: translateY(1px); }
+  .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .btn-primary { background: var(--ok); border-color: var(--ok); color: #052e0f; font-weight: 600; }
+  .btn-primary:hover { background: #16a34a; border-color: #16a34a; }
+  .btn-warn { background: transparent; border-color: var(--warn); color: var(--warn); }
+  .btn-warn:hover { background: rgba(245, 158, 11, 0.08); }
+  .btn-ghost { background: transparent; border-color: var(--border-hover); color: var(--text-muted); }
+  .btn-ghost:hover { background: var(--panel-2); color: var(--text); }
+  .btn-sm { padding: 4px 8px; font-size: 11px; }
+  /* Loading-Spinner für Buttons im async-Zustand */
+  .btn.loading {
+    position: relative;
+    color: transparent;
+    pointer-events: none;
+  }
+  .btn.loading::after {
+    content: "";
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 12px; height: 12px;
+    margin: -6px 0 0 -6px;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    color: var(--text);
+    animation: spin 0.7s linear infinite;
+  }
+  .btn-primary.loading::after { color: #052e0f; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) {
+    .btn.loading::after { animation: none; }
+  }
+
+  /* Three-column grid */
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+  @media (max-width: 1200px) {
+    .grid { grid-template-columns: 1fr 1fr; }
+    .grid .column.pn { grid-column: span 2; }
+  }
+  @media (max-width: 700px) {
+    .grid { grid-template-columns: 1fr; }
+    .grid .column.pn { grid-column: auto; }
+  }
+  .column {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .column-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .column-title {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+  .column-count {
+    font-family: 'Fira Code', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .list { display: flex; flex-direction: column; gap: 10px; }
+  .card {
+    background: var(--panel-2);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 12px 14px;
+    transition: border-color 200ms ease, background 200ms ease;
+    animation: slide-in 300ms ease-out;
+  }
+  .card:hover { border-color: var(--border-hover); }
+  @keyframes slide-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .meta {
+    font-family: 'Fira Code', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+  .nick {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .preview {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-top: 2px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* PN-Status-Pillen */
+  .pn-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Fira Code', monospace;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .pn-pill.ok      { color: var(--ok);   background: rgba(34,197,94,0.08); }
+  .pn-pill.filter  { color: var(--warn); background: rgba(245,158,11,0.10); }
+  .pn-pill.error   { color: var(--fail); background: rgba(239,68,68,0.08); }
+  .pn-detail {
+    color: var(--text-dim);
+    font-size: 11px;
+    font-family: 'Fira Code', monospace;
+    margin-top: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .channel-row { display: flex; align-items: center; gap: 10px; }
+  .channel { font-weight: 600; font-size: 14px; }
+  .variant {
+    font-family: 'Fira Code', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    background: rgba(56, 189, 248, 0.08);
+    padding: 1px 6px;
+    border-radius: 3px;
+  }
+  .empty {
+    color: var(--text-dim);
+    font-style: italic;
+    text-align: center;
+    padding: 40px 16px;
+    font-size: 13px;
+  }
+  .card.fresh {
+    border-color: var(--ok);
+    background: rgba(34, 197, 94, 0.04);
+  }
+
+  /* Editor */
+  .editor {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .editor-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .editor-head h2 {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .editor-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .save-status {
+    font-family: 'Fira Code', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    opacity: 0;
+    transition: opacity 200ms ease;
+  }
+  .save-status.visible { opacity: 1; }
+  .save-status.ok { color: var(--ok); }
+  .save-status.err { color: var(--fail); }
+
+  .variants {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  @media (max-width: 1100px) { .variants { grid-template-columns: 1fr; } }
+
+  .variant-block {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .variant-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .variant-label {
+    font-family: 'Fira Code', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .variant-remove {
+    all: unset;
+    cursor: pointer;
+    color: var(--text-dim);
+    font-size: 16px;
+    line-height: 1;
+    padding: 0 6px;
+    border-radius: 4px;
+  }
+  .variant-remove:hover:not(:disabled) { color: var(--fail); background: rgba(239,68,68,0.08); }
+  .variant-remove:disabled { opacity: 0.25; cursor: not-allowed; }
+  .variant-add-row {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: center;
+    margin-top: 4px;
+  }
+  textarea {
+    width: 100%;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-family: 'Fira Sans', sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+    resize: vertical;
+    min-height: 90px;
+    transition: border-color 200ms ease;
+  }
+  textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  textarea.dirty { border-color: var(--warn); }
+
+  /* Stats-Leiste */
+  .stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 10px 14px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-family: 'Fira Code', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .stat-item { display: flex; gap: 6px; align-items: baseline; }
+  .stat-label { color: var(--text-dim); }
+  .stat-value { color: var(--text); font-weight: 600; }
+  .stat-value.accent { color: var(--accent); }
+  .stat-value.ok { color: var(--ok); }
+
+  /* PN-Editor (eigene Card) */
+  .pn-block { margin-top: 24px; }
+
+  /* Channel-Auswahl */
+  .ch-block { margin-bottom: 24px; }
+  .ch-selected {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+    min-height: 32px;
+  }
+  .ch-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(56,189,248,0.10);
+    border: 1px solid rgba(56,189,248,0.30);
+    color: var(--accent);
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-family: 'Fira Code', monospace;
+    font-size: 12px;
+  }
+  .ch-chip button {
+    all: unset;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1;
+    padding: 0 2px;
+  }
+  .ch-chip button:hover { color: var(--fail); }
+  .ch-empty {
+    color: var(--text-dim);
+    font-style: italic;
+    font-size: 13px;
+  }
+
+  .ch-search { display: flex; flex-direction: column; gap: 8px; }
+  .ch-search input {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-family: 'Fira Sans', sans-serif;
+    font-size: 14px;
+    width: 100%;
+  }
+  .ch-search input:focus { outline: none; border-color: var(--accent); }
+  .ch-results { display: flex; flex-direction: column; gap: 4px; max-height: 240px; overflow-y: auto; }
+  .ch-result {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: var(--panel-2);
+    border: 1px solid transparent;
+    border-radius: 6px;
+    transition: border-color 150ms ease;
+    cursor: pointer;
+  }
+  .ch-result:hover { border-color: var(--border-hover); }
+  .ch-result-meta {
+    font-family: 'Fira Code', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .ch-result.added { opacity: 0.5; cursor: default; }
+  .ch-result.added:hover { border-color: transparent; }
+  .ch-hint { color: var(--text-dim); font-size: 12px; font-style: italic; }
+
+  /* Event-Log */
+  .events {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    max-height: 260px;
+    overflow-y: auto;
+    font-family: 'Fira Code', monospace;
+    font-size: 11px;
+    line-height: 1.55;
+  }
+  .events .ev { display: flex; gap: 12px; padding: 2px 0; }
+  .events .ev-ts { color: var(--text-dim); white-space: nowrap; }
+  .events .ev-px { color: var(--accent); width: 50px; flex-shrink: 0; }
+  .events .ev-px.PN, .events .ev-px.MSG { color: var(--ok); }
+  .events .ev-px.SPAM, .events .ev-px.TEST { color: var(--accent); }
+  .events .ev-px.WARN, .events .ev-px.FAIL { color: var(--fail); }
+  .events .ev-px.INIT, .events .ev-px.DISC, .events .ev-px.EDIT { color: var(--text-muted); }
+  .events .ev-px.RESTART { color: var(--warn); }
+  .events .ev-msg { color: var(--text); word-break: break-word; }
+
+  /* Bot-Config Sektion (Intervalle + Limits) */
+  .cfg-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+  }
+  .cfg-field { display: flex; flex-direction: column; gap: 4px; }
+  .cfg-label {
+    font-family: 'Fira Code', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .cfg-input {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    color: var(--text);
+    font-family: 'Fira Code', monospace;
+    font-size: 14px;
+    width: 100%;
+  }
+  .cfg-input:focus { outline: none; border-color: var(--accent); }
+  .cfg-input.dirty { border-color: var(--warn); }
+  .cfg-hint { font-size: 11px; color: var(--text-dim); }
+
+  /* Forget-User */
+  .forget-row { display: flex; gap: 8px; }
+  .forget-row input {
+    flex: 1;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    color: var(--text);
+    font-family: 'Fira Code', monospace;
+    font-size: 13px;
+  }
+  .forget-row input:focus { outline: none; border-color: var(--accent); }
+
+  /* "answered" Markierung im PN-Log */
+  .answered-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: 'Fira Code', monospace;
+    font-size: 10px;
+    color: var(--ok);
+    background: rgba(34,197,94,0.08);
+    padding: 1px 6px;
+    border-radius: 3px;
+    margin-left: 4px;
+  }
+
+  /* Mobile-Anpassungen */
+  @media (max-width: 640px) {
+    header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .header-right { width: 100%; justify-content: space-between; }
+    .stats { font-size: 11px; padding: 8px 10px; }
+    .column, .editor, .events { padding: 14px; }
+    .variants { grid-template-columns: 1fr !important; }
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .pulse, .card { animation: none; }
+    .card, textarea, .btn { transition: none; }
+  }
+
+  /* Account-Modal */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000;
+  }
+  .modal {
+    background: var(--panel);
+    border: 1px solid var(--border-hover);
+    border-radius: 14px;
+    padding: 24px;
+    width: 420px;
+    max-width: calc(100vw - 32px);
+    max-height: 80vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .modal-head h3 {
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .modal-close {
+    all: unset;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 20px;
+    line-height: 1;
+    padding: 4px 8px;
+    border-radius: 6px;
+  }
+  .modal-close:hover { color: var(--text); background: var(--panel-2); }
+  .account-list { display: flex; flex-direction: column; gap: 6px; }
+  .account-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--panel-2);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: border-color 150ms ease;
+  }
+  .account-item:hover { border-color: var(--border-hover); }
+  .account-item.active {
+    border-color: var(--ok);
+    color: var(--ok);
+    cursor: default;
+  }
+  .account-badge {
+    font-family: 'Fira Code', monospace;
+    font-size: 10px;
+    background: rgba(34,197,94,0.12);
+    color: var(--ok);
+    padding: 2px 7px;
+    border-radius: 999px;
+  }
+  .modal-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+  }
+  .modal-section-title {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+  }
+  .modal-field { display: flex; flex-direction: column; gap: 6px; }
+  .modal-input {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    color: var(--text);
+    font-family: 'Fira Sans', sans-serif;
+    font-size: 14px;
+    width: 100%;
+  }
+  .modal-input:focus { outline: none; border-color: var(--accent); }
+  .modal-error {
+    font-family: 'Fira Code', monospace;
+    font-size: 11px;
+    color: var(--fail);
+    min-height: 16px;
+  }
+</style>
+</head>
+<body>
+
+<!-- Account-Wechsel-Modal -->
+<div id="account-modal" class="modal-overlay" style="display:none" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modal-title">Account wechseln</h3>
+      <button class="modal-close" id="modal-close" title="Schließen">×</button>
+    </div>
+    <div>
+      <div class="modal-section-title">Gespeicherte Accounts</div>
+      <div class="account-list" id="account-list">
+        <div style="color:var(--text-dim); font-size:13px; font-style:italic;">Lädt…</div>
+      </div>
+    </div>
+    <hr class="modal-divider">
+    <div>
+      <div class="modal-section-title">Neuen Account hinzufügen</div>
+      <div class="modal-field" style="gap:10px;">
+        <input class="modal-input" type="text" id="add-user" placeholder="Knuddels-Nick" autocomplete="username">
+        <input class="modal-input" type="password" id="add-pw" placeholder="Passwort" autocomplete="current-password">
+        <div class="modal-error" id="add-error"></div>
+        <button class="btn btn-primary" id="add-account-btn">Hinzufügen &amp; wechseln</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<header>
+  <div>
+    <span class="title">Knuddels-Bot Dashboard</span>
+    <span class="title-sub" id="me">— lädt…</span>
+  </div>
+  <div class="header-right">
+    <div class="status">
+      <span class="pulse" id="pulse"></span>
+      <span id="status-text">Verbunden</span>
+      <span class="meta" id="last-update">—</span>
+    </div>
+    <button class="btn btn-ghost" id="account-btn" title="Zwischen Knuddels-Accounts wechseln">
+      Account wechseln
+    </button>
+    <button class="btn" id="pause-btn" title="Spam + PN aussetzen; MSG-Watch läuft weiter">
+      Pausieren
+    </button>
+    <button class="btn btn-warn" id="restart-btn" title="Re-Login + Discovery + Logs leeren">
+      Bot neu starten
+    </button>
+  </div>
+</header>
+
+<div id="onboarding-banner" style="display:none; background: rgba(245,158,11,0.10); border: 1px solid var(--warn); color: var(--warn); padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 13px;">
+  <strong>Bot idlet.</strong> Füge unten unter <em>Channels</em> mindestens eine Channel-Gruppe hinzu, damit er anfängt zu posten.
+</div>
+
+<div class="stats" id="stats">
+  <div class="stat-item">
+    <span class="stat-label">Channel:</span>
+    <span class="stat-value accent" id="stat-channel">—</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-label">Channels:</span>
+    <span class="stat-value" id="stat-channel-count">0</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-label">PN-Modus:</span>
+    <span class="stat-value" id="stat-mode">—</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-label">Queue:</span>
+    <span class="stat-value" id="stat-queue">—</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-label">Heute:</span>
+    <span class="stat-value" id="stat-today">0</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-label">Geantwortet:</span>
+    <span class="stat-value ok" id="stat-answered">0</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-label">Rate:</span>
+    <span class="stat-value" id="stat-rate">—</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-label">DB:</span>
+    <span class="stat-value" id="stat-db">0</span>
+  </div>
+</div>
+
+<div class="grid">
+  <section class="column" aria-labelledby="hd-inbox">
+    <div class="column-head">
+      <h2 class="column-title" id="hd-inbox">Posteingang</h2>
+      <span class="column-count" id="count-inbox">0 / 6</span>
+    </div>
+    <div class="list" id="inbox-list">
+      <div class="empty">Noch keine neuen Nachrichten</div>
+    </div>
+  </section>
+
+  <section class="column" aria-labelledby="hd-sent">
+    <div class="column-head">
+      <h2 class="column-title" id="hd-sent">Gesendet (Channel)</h2>
+      <span class="column-count" id="count-sent">0 / 6</span>
+    </div>
+    <div class="list" id="sent-list">
+      <div class="empty">Noch nichts gepostet</div>
+    </div>
+  </section>
+
+  <section class="column pn" aria-labelledby="hd-pn-log">
+    <div class="column-head">
+      <h2 class="column-title" id="hd-pn-log">PN-Versand</h2>
+      <span class="column-count" id="count-pn">0 / 10</span>
+    </div>
+    <div class="list" id="pn-list">
+      <div class="empty">Noch keine PNs gesendet</div>
+    </div>
+  </section>
+</div>
+
+<section class="events" id="events-pane" aria-labelledby="hd-events">
+  <div style="display:flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--border);">
+    <h2 class="column-title" id="hd-events">Live-Log</h2>
+    <span class="column-count" id="events-count">0</span>
+  </div>
+  <div id="events-list"></div>
+</section>
+
+<section class="editor ch-block" aria-labelledby="hd-channels">
+  <div class="editor-head">
+    <h2 id="hd-channels">Channels</h2>
+    <span class="save-status" id="ch-save-status"></span>
+  </div>
+  <div class="ch-selected" id="ch-selected"></div>
+  <div class="ch-search">
+    <input type="text" id="ch-search-input" placeholder="Channel-Gruppe suchen — z.B. Matratzen, Single, Erotic …" autocomplete="off">
+    <div class="ch-hint" id="ch-hint">Tippe los, um Channel-Gruppen zu finden. Klick fügt sie zum Verteiler hinzu. Sub-Channels (z.B. „Matratzensport 2", „… 3") werden automatisch mit-discovered.</div>
+    <div class="ch-results" id="ch-results"></div>
+  </div>
+</section>
+
+<section class="editor" aria-labelledby="hd-editor">
+  <div class="editor-head">
+    <h2 id="hd-editor">Channel-Varianten</h2>
+    <div class="editor-actions">
+      <span class="save-status" id="save-status"></span>
+      <button class="btn btn-primary" id="save-btn" disabled>Speichern</button>
+    </div>
+  </div>
+  <div class="variants" id="variants"></div>
+</section>
+
+<section class="editor pn-block" aria-labelledby="hd-pn">
+  <div class="editor-head">
+    <h2 id="hd-pn">PN-Vorlage (Privatnachricht an weibliche Profile)</h2>
+    <div class="editor-actions">
+      <span class="save-status" id="pn-save-status"></span>
+      <button class="btn btn-primary" id="pn-save-btn" disabled>Speichern</button>
+    </div>
+  </div>
+  <textarea id="pn-text" rows="4" placeholder="Wird beim Channel-Besuch an jedes weibliche Profil einmalig versendet. Verwende ${nick} als Platzhalter für den Empfänger-Nick."></textarea>
+  <div class="cfg-hint" style="margin-top: 6px;">Platzhalter: <code>${nick}</code> wird beim Senden durch den jeweiligen Empfänger-Nick ersetzt.</div>
+</section>
+
+<section class="editor pn-block" aria-labelledby="hd-cfg">
+  <div class="editor-head">
+    <h2 id="hd-cfg">Timing &amp; Limits</h2>
+    <div class="editor-actions">
+      <span class="save-status" id="cfg-save-status"></span>
+      <button class="btn btn-primary" id="cfg-save-btn" disabled>Speichern</button>
+    </div>
+  </div>
+  <div class="cfg-grid">
+    <div class="cfg-field">
+      <label class="cfg-label" for="cfg-spam">Channel-Intervall (s)</label>
+      <input type="number" class="cfg-input" id="cfg-spam" min="5" max="3600" step="1">
+      <div class="cfg-hint">Sekunden zwischen Channel-Sends</div>
+    </div>
+    <div class="cfg-field">
+      <label class="cfg-label" for="cfg-msg">Posteingang-Intervall (s)</label>
+      <input type="number" class="cfg-input" id="cfg-msg" min="5" max="3600" step="1">
+      <div class="cfg-hint">Wie oft auf neue PNs prüfen</div>
+    </div>
+    <div class="cfg-field">
+      <label class="cfg-label" for="cfg-pn">PN-Intervall (s)</label>
+      <input type="number" class="cfg-input" id="cfg-pn" min="5" max="3600" step="1">
+      <div class="cfg-hint">Zwischen zwei PN-Versendungen</div>
+    </div>
+    <div class="cfg-field">
+      <label class="cfg-label" for="cfg-limit">Tageslimit PN (0 = kein Limit)</label>
+      <input type="number" class="cfg-input" id="cfg-limit" min="0" max="100000" step="1">
+      <div class="cfg-hint">Schutz gegen Shadowban</div>
+    </div>
+  </div>
+</section>
+
+<section class="editor pn-block" aria-labelledby="hd-forget">
+  <div class="editor-head">
+    <h2 id="hd-forget">PN-DB aufräumen</h2>
+    <div class="editor-actions">
+      <span class="save-status" id="forget-status"></span>
+    </div>
+  </div>
+  <div class="cfg-hint" style="margin-bottom: 8px;">Entfernt eine User-ID aus der „bereits angeschrieben"-DB. Damit kann beim nächsten Durchlauf erneut eine PN gehen. Wert ist die numerische User-ID (z.B. <code>73781333</code>).</div>
+  <div class="forget-row">
+    <input type="text" id="forget-input" placeholder="User-ID eingeben…" autocomplete="off">
+    <button class="btn btn-warn" id="forget-btn">Entfernen</button>
+  </div>
+</section>
+
+<script>
+  const POLL_MS = 5000;
+  const SEEN_CAP = 500;   // damit die Sets nicht unbegrenzt wachsen
+  const seenInbox = new Set();
+  const seenSent = new Set();
+  const seenPn = new Set();
+  let firstLoad = true;
+  let serverMessages = [];
+
+  // Sets begrenzen — wenn voll, ältesten Eintrag droppen.
+  function rememberSeen(set, key) {
+    if (set.has(key)) return;
+    set.add(key);
+    if (set.size > SEEN_CAP) {
+      const first = set.values().next().value;
+      set.delete(first);
+    }
+  }
+
+  function escapeHtml(s) {
+    if (s === null || s === undefined) return '';
+    return String(s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  // Wrappt eine async-Funktion sodass ein Button während des Aufrufs den Spinner zeigt.
+  async function withLoading(btn, fn) {
+    if (!btn) return await fn();
+    const wasDisabled = btn.disabled;
+    btn.classList.add('loading');
+    btn.disabled = true;
+    try {
+      return await fn();
+    } finally {
+      btn.classList.remove('loading');
+      btn.disabled = wasDisabled;
+    }
+  }
+  function formatTime(iso) {
+    if (!iso) return '—';
+    try {
+      const d = new Date(iso);
+      const now = new Date();
+      const sameDay = d.toDateString() === now.toDateString();
+      const t = d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+      if (sameDay) return t;
+      const day = d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+      return `${day} ${t}`;
+    } catch { return '—'; }
+  }
+
+  function renderInbox(items) {
+    const wrap = document.getElementById('inbox-list');
+    document.getElementById('count-inbox').textContent = `${items.length} / 6`;
+    if (!items.length) {
+      wrap.innerHTML = '<div class="empty">Noch keine neuen Nachrichten</div>';
+      return;
+    }
+    wrap.innerHTML = items.map(it => {
+      const key = it.id || `${it.ts}_${it.nick}`;
+      const fresh = !firstLoad && !seenInbox.has(key) ? ' fresh' : '';
+      rememberSeen(seenInbox, key);
+      const replyBadge = it.is_reply ? '<span class="answered-badge">↩ Antwort</span>' : '';
+      return `
+        <div class="card${fresh}">
+          <div class="row">
+            <span class="nick">${escapeHtml(it.nick)}${replyBadge}</span>
+            <span class="meta">${escapeHtml(formatTime(it.ts))}</span>
+          </div>
+          <div class="preview">${escapeHtml(it.preview)}</div>
+        </div>`;
+    }).join('');
+  }
+
+  function renderSent(items) {
+    const wrap = document.getElementById('sent-list');
+    document.getElementById('count-sent').textContent = `${items.length} / 6`;
+    if (!items.length) {
+      wrap.innerHTML = '<div class="empty">Noch nichts gepostet</div>';
+      return;
+    }
+    wrap.innerHTML = items.map(it => {
+      const key = it.id || `${it.ts}_${it.channel}_${it.variant}`;
+      const fresh = !firstLoad && !seenSent.has(key) ? ' fresh' : '';
+      rememberSeen(seenSent, key);
+      return `
+        <div class="card${fresh}">
+          <div class="row">
+            <div class="channel-row">
+              <span class="channel">${escapeHtml(it.channel)}</span>
+              <span class="variant">V${escapeHtml(it.variant)}</span>
+            </div>
+            <span class="meta">${escapeHtml(formatTime(it.ts))}</span>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  const PN_STATUS_LABEL = {
+    ok: 'gesendet',
+    filter: 'gefiltert',
+    error: 'Fehler'
+  };
+
+  function renderPn(items) {
+    const wrap = document.getElementById('pn-list');
+    document.getElementById('count-pn').textContent = `${items.length} / 10`;
+    if (!items.length) {
+      wrap.innerHTML = '<div class="empty">Noch keine PNs gesendet</div>';
+      return;
+    }
+    wrap.innerHTML = items.map(it => {
+      const key = it.id;
+      const fresh = !firstLoad && !seenPn.has(key) ? ' fresh' : '';
+      rememberSeen(seenPn, key);
+      const status = (it.status || 'error');
+      const lbl = PN_STATUS_LABEL[status] || status;
+      const detailRow = it.detail
+        ? `<div class="pn-detail">${escapeHtml(it.detail)}</div>` : '';
+      const answered = it.answered ? '<span class="answered-badge">↩ antwortete</span>' : '';
+      return `
+        <div class="card${fresh}">
+          <div class="row">
+            <span class="nick">${escapeHtml(it.nick)}${answered}</span>
+            <span class="meta">${escapeHtml(formatTime(it.ts))}</span>
+          </div>
+          <div class="row">
+            <span class="pn-pill ${status}">${lbl}</span>
+          </div>
+          ${detailRow}
+        </div>`;
+    }).join('');
+  }
+
+  function renderStats(stats) {
+    if (!stats) return;
+    document.getElementById('stat-channel').textContent = stats.current_channel || '—';
+    document.getElementById('stat-channel-count').textContent = stats.channel_count ?? 0;
+    const modeEl = document.getElementById('stat-mode');
+    if (stats.pn_enabled) {
+      modeEl.textContent = 'aktiv';
+      modeEl.className = 'stat-value ok';
+    } else {
+      modeEl.textContent = 'aus';
+      modeEl.className = 'stat-value';
+      modeEl.style.color = 'var(--text-dim)';
+    }
+    const rem = stats.pn_queue_remaining;
+    const tot = stats.pn_queue_total || 0;
+    document.getElementById('stat-queue').textContent =
+      !stats.pn_enabled ? '—' :
+      (rem === null || rem === undefined ? '—' : `${tot - rem} / ${tot}`);
+    const limit = stats.pn_today_limit || 0;
+    document.getElementById('stat-today').textContent = limit
+      ? `${stats.pn_today_count ?? 0} / ${limit}`
+      : (stats.pn_today_count ?? 0);
+    document.getElementById('stat-answered').textContent = stats.pn_answered ?? 0;
+    document.getElementById('stat-rate').textContent =
+      stats.answer_rate === null || stats.answer_rate === undefined
+        ? '—'
+        : `${stats.answer_rate}%`;
+    document.getElementById('stat-db').textContent = stats.pn_total_db ?? 0;
+  }
+
+  function renderEvents(events) {
+    const wrap = document.getElementById('events-list');
+    document.getElementById('events-count').textContent = events.length;
+    if (!events.length) {
+      wrap.innerHTML = '<div class="ev" style="color: var(--text-dim); font-style: italic;">Noch keine Events</div>';
+      return;
+    }
+    wrap.innerHTML = events.map(e => {
+      const t = new Date(e.ts);
+      const tStr = t.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const px = (e.prefix || '').trim();
+      return `<div class="ev"><span class="ev-ts">${escapeHtml(tStr)}</span>` +
+             `<span class="ev-px ${escapeHtml(px)}">${escapeHtml(px)}</span>` +
+             `<span class="ev-msg">${escapeHtml(e.msg)}</span></div>`;
+    }).join('');
+  }
+
+  function updatePauseButton(paused) {
+    const btn = document.getElementById('pause-btn');
+    btn.dataset.paused = paused ? '1' : '0';
+    if (paused) {
+      btn.textContent = 'Fortsetzen';
+      btn.classList.add('btn-primary');
+      btn.title = 'SPAM + PN wieder aktivieren';
+    } else {
+      btn.textContent = 'Pausieren';
+      btn.classList.remove('btn-primary');
+      btn.title = 'SPAM + PN aussetzen; MSG-Watch läuft weiter';
+    }
+  }
+
+  function updateOnboarding(stats) {
+    const banner = document.getElementById('onboarding-banner');
+    const empty = (stats.channel_count ?? 0) === 0;
+    banner.style.display = empty ? 'block' : 'none';
+  }
+
+  async function poll() {
+    try {
+      const r = await fetch('/state.json', { cache: 'no-store' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const data = await r.json();
+      document.getElementById('me').textContent = data.me ? `als ${data.me}` : '';
+      renderInbox((data.inbox || []).slice(0, 6));
+      renderSent((data.sent || []).slice(0, 6));
+      renderPn((data.pn || []).slice(0, 10));
+      renderStats(data.stats || {});
+      renderEvents(data.events || []);
+      updatePauseButton(!!data.paused);
+      updateOnboarding(data.stats || {});
+      document.getElementById('status-text').textContent = 'Verbunden';
+      document.getElementById('pulse').style.background = 'var(--ok)';
+      document.getElementById('last-update').textContent = `Update ${new Date().toLocaleTimeString('de-DE')}`;
+      firstLoad = false;
+    } catch (e) {
+      document.getElementById('status-text').textContent = 'Bot offline';
+      document.getElementById('pulse').style.background = 'var(--fail)';
+    }
+  }
+
+  // === Editor (dynamisch, beliebig viele Varianten ≥ MIN_VARIANTS).
+  // Inkrementell aktualisiert (H5-Fix): wir bauen nicht jedes Mal das gesamte
+  // Variants-DOM neu, sondern hängen nur die neue Zeile an / entfernen die eine
+  // Zeile. Cursor und Scrollposition in anderen Textareas bleiben dadurch erhalten.
+
+  const MIN_VARIANTS = 2;
+  let localMessages = [];  // aktueller Edit-State (wird aus DOM ausgelesen)
+
+  function showStatus(text, cls) {
+    const el = document.getElementById('save-status');
+    el.textContent = text;
+    el.className = 'save-status visible ' + (cls || '');
+    setTimeout(() => el.classList.remove('visible'), 3000);
+  }
+
+  function getVariantBlocks() {
+    return Array.from(document.querySelectorAll('#variants .variant-block'));
+  }
+
+  function readVariantsFromDOM() {
+    localMessages = getVariantBlocks().map(b => b.querySelector('textarea').value);
+  }
+
+  function renumberVariants() {
+    const blocks = getVariantBlocks();
+    const canRemove = blocks.length > MIN_VARIANTS;
+    blocks.forEach((b, i) => {
+      const numEl = b.querySelector('.variant-num');
+      if (numEl) numEl.textContent = (i + 1);
+      const rmBtn = b.querySelector('.variant-remove');
+      if (rmBtn) {
+        rmBtn.disabled = !canRemove;
+        rmBtn.title = canRemove ? 'Variante entfernen' : `Mindestens ${MIN_VARIANTS} Varianten nötig`;
+      }
+    });
+  }
+
+  function checkDirty() {
+    let dirty = localMessages.length !== serverMessages.length;
+    if (!dirty) {
+      for (let i = 0; i < localMessages.length; i++) {
+        if (localMessages[i] !== serverMessages[i]) { dirty = true; break; }
+      }
+    }
+    getVariantBlocks().forEach((b, i) => {
+      const ta = b.querySelector('textarea');
+      const changed = i >= serverMessages.length || ta.value !== serverMessages[i];
+      ta.classList.toggle('dirty', changed);
+    });
+    const allFilled = localMessages.every(m => m.trim());
+    const enoughCount = localMessages.length >= MIN_VARIANTS;
+    document.getElementById('save-btn').disabled = !(dirty && allFilled && enoughCount);
+  }
+
+  function createVariantBlock(text) {
+    const div = document.createElement('div');
+    div.className = 'variant-block';
+    div.innerHTML = `
+      <div class="variant-head">
+        <label class="variant-label">Variante <span class="variant-num"></span></label>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <button class="btn btn-ghost btn-sm test-btn" type="button"
+                  title="Sofortiger einmaliger Test-Send in den aktuellen Channel">Test</button>
+          <button class="variant-remove" type="button">×</button>
+        </div>
+      </div>
+      <textarea rows="4"></textarea>
+    `;
+    // textContent statt innerHTML beim Textarea-Set, weil escapeHtml() im innerHTML
+    // bei Mehrzeilern den line-break verlieren würde.
+    div.querySelector('textarea').value = text;
+    div.querySelector('textarea').addEventListener('input', () => {
+      readVariantsFromDOM();
+      checkDirty();
+    });
+    div.querySelector('.variant-remove').addEventListener('click', (e) => {
+      if (e.currentTarget.disabled) return;
+      div.remove();
+      readVariantsFromDOM();
+      renumberVariants();
+      checkDirty();
+    });
+    div.querySelector('.test-btn').addEventListener('click', () => {
+      const idx = getVariantBlocks().indexOf(div);
+      testSendVariant(idx, div.querySelector('.test-btn'));
+    });
+    return div;
+  }
+
+  function renderEditorInitial(messages) {
+    const wrap = document.getElementById('variants');
+    wrap.innerHTML = '';
+    messages.forEach(m => wrap.appendChild(createVariantBlock(m)));
+    const addRow = document.createElement('div');
+    addRow.className = 'variant-add-row';
+    addRow.innerHTML = '<button id="variant-add" class="btn" type="button">+ Variante hinzufügen</button>';
+    wrap.appendChild(addRow);
+    document.getElementById('variant-add').addEventListener('click', () => {
+      const addRow = wrap.querySelector('.variant-add-row');
+      wrap.insertBefore(createVariantBlock(''), addRow);
+      readVariantsFromDOM();
+      renumberVariants();
+      checkDirty();
+    });
+    readVariantsFromDOM();
+    renumberVariants();
+  }
+
+  async function testSendVariant(idx, btn) {
+    await withLoading(btn || null, async () => {
+      try {
+        const r = await fetch('/api/test-send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ variant: idx })
+        });
+        const data = await r.json();
+        if (!r.ok || data.error) throw new Error(data.error || 'HTTP ' + r.status);
+        showStatus(`Test-Send V${idx+1} angefordert`, 'ok');
+      } catch (e) {
+        showStatus('Test-Send fail: ' + e.message, 'err');
+      }
+    });
+  }
+
+  async function loadMessages() {
+    try {
+      const r = await fetch('/api/messages', { cache: 'no-store' });
+      const data = await r.json();
+      serverMessages = (data.messages || []).slice();
+      renderEditorInitial(serverMessages);
+      checkDirty();
+    } catch (e) {
+      showStatus('Editor-Load fehlgeschlagen', 'err');
+    }
+  }
+
+  async function save() {
+    if (localMessages.length < MIN_VARIANTS) {
+      showStatus(`Mindestens ${MIN_VARIANTS} Varianten nötig`, 'err');
+      return;
+    }
+    if (!localMessages.every(m => m.trim())) {
+      showStatus('Leere Variante nicht erlaubt', 'err');
+      return;
+    }
+    const btn = document.getElementById('save-btn');
+    await withLoading(btn, async () => {
+      showStatus('Speichere…', '');
+      try {
+        const r = await fetch('/api/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: localMessages })
+        });
+        const data = await r.json();
+        if (!r.ok || data.error) throw new Error(data.error || 'HTTP ' + r.status);
+        serverMessages = localMessages.slice();
+        checkDirty();
+        showStatus('Gespeichert ✓', 'ok');
+      } catch (e) {
+        showStatus('Fehler: ' + e.message, 'err');
+        checkDirty();
+      }
+    });
+  }
+
+  async function restart() {
+    if (!confirm('Bot neu starten? (Re-Login, Channels neu discovern, Logs leeren)')) return;
+    const btn = document.getElementById('restart-btn');
+    await withLoading(btn, async () => {
+      try {
+        const r = await fetch('/api/restart', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        seenInbox.clear();
+        seenSent.clear();
+        seenPn.clear();
+        firstLoad = true;
+        // Kurze Wartezeit, damit man die Aktion visuell mitbekommt
+        await new Promise(r => setTimeout(r, 1500));
+      } catch (e) {
+        alert('Restart fehlgeschlagen: ' + e.message);
+      }
+    });
+  }
+
+  // === PN-Editor ===
+  let serverPnText = '';
+
+  function checkPnDirty() {
+    const ta = document.getElementById('pn-text');
+    const changed = ta.value !== serverPnText;
+    ta.classList.toggle('dirty', changed);
+    document.getElementById('pn-save-btn').disabled = !changed;
+  }
+
+  function showPnStatus(text, cls) {
+    const el = document.getElementById('pn-save-status');
+    el.textContent = text;
+    el.className = 'save-status visible ' + (cls || '');
+    setTimeout(() => el.classList.remove('visible'), 3000);
+  }
+
+  async function loadPnText() {
+    try {
+      const r = await fetch('/api/pn-text', { cache: 'no-store' });
+      const data = await r.json();
+      serverPnText = data.text || '';
+      document.getElementById('pn-text').value = serverPnText;
+      checkPnDirty();
+    } catch (e) {
+      showPnStatus('PN-Load fehlgeschlagen', 'err');
+    }
+  }
+
+  async function savePnText() {
+    const text = document.getElementById('pn-text').value;
+    const btn = document.getElementById('pn-save-btn');
+    await withLoading(btn, async () => {
+      showPnStatus('Speichere…', '');
+      try {
+        const r = await fetch('/api/pn-text', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text })
+        });
+        const data = await r.json();
+        if (!r.ok || data.error) throw new Error(data.error || 'HTTP ' + r.status);
+        serverPnText = text;
+        checkPnDirty();
+        showPnStatus('Gespeichert ✓', 'ok');
+      } catch (e) {
+        showPnStatus('Fehler: ' + e.message, 'err');
+        checkPnDirty();
+      }
+    });
+  }
+
+  document.getElementById('pn-text').addEventListener('input', checkPnDirty);
+  document.getElementById('pn-save-btn').addEventListener('click', savePnText);
+  document.getElementById('save-btn').addEventListener('click', save);
+  document.getElementById('restart-btn').addEventListener('click', restart);
+
+  // === Channel-Auswahl ===
+  let selectedGroups = [];
+  let searchResults = [];
+  let searchTimer = null;
+
+  function showChStatus(text, cls) {
+    const el = document.getElementById('ch-save-status');
+    el.textContent = text;
+    el.className = 'save-status visible ' + (cls || '');
+    setTimeout(() => el.classList.remove('visible'), 2500);
+  }
+
+  function renderSelected() {
+    const wrap = document.getElementById('ch-selected');
+    if (!selectedGroups.length) {
+      wrap.innerHTML = '<span class="ch-empty">Noch keine Channel-Gruppen ausgewählt. Bot postet nichts, bis hier mind. eine drin ist.</span>';
+      return;
+    }
+    wrap.innerHTML = selectedGroups.map(n => `
+      <span class="ch-chip">
+        ${escapeHtml(n)}
+        <button title="Entfernen" data-remove="${escapeHtml(n)}">×</button>
+      </span>
+    `).join('');
+    wrap.querySelectorAll('button[data-remove]').forEach(btn => {
+      btn.addEventListener('click', () => removeGroup(btn.dataset.remove));
+    });
+  }
+
+  function renderResults() {
+    const wrap = document.getElementById('ch-results');
+    if (!searchResults.length) {
+      wrap.innerHTML = '';
+      return;
+    }
+    wrap.innerHTML = searchResults.map(r => {
+      const added = selectedGroups.includes(r.name);
+      return `
+        <div class="ch-result${added ? ' added' : ''}" data-add="${escapeHtml(r.name)}">
+          <span>${escapeHtml(r.name)}${added ? ' ✓' : ''}</span>
+          <span class="ch-result-meta">${r.instances}× · ${r.users} online</span>
+        </div>`;
+    }).join('');
+    wrap.querySelectorAll('.ch-result:not(.added)').forEach(el => {
+      el.addEventListener('click', () => addGroup(el.dataset.add));
+    });
+  }
+
+  async function loadChannelGroups() {
+    try {
+      const r = await fetch('/api/channel-groups', { cache: 'no-store' });
+      const data = await r.json();
+      selectedGroups = (data.names || []).slice();
+      renderSelected();
+      renderResults();  // re-render results to reflect "added" state
+    } catch (e) {
+      showChStatus('Load fehlgeschlagen', 'err');
+    }
+  }
+
+  async function saveSelected() {
+    try {
+      const r = await fetch('/api/channel-groups', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ names: selectedGroups })
+      });
+      const data = await r.json();
+      if (!r.ok || data.error) throw new Error(data.error || 'HTTP ' + r.status);
+      showChStatus('Gespeichert ✓', 'ok');
+    } catch (e) {
+      showChStatus('Fehler: ' + e.message, 'err');
+    }
+  }
+
+  async function addGroup(name) {
+    if (selectedGroups.includes(name)) return;
+    selectedGroups.push(name);
+    renderSelected();
+    renderResults();
+    await saveSelected();
+  }
+
+  async function removeGroup(name) {
+    selectedGroups = selectedGroups.filter(n => n !== name);
+    renderSelected();
+    renderResults();
+    await saveSelected();
+  }
+
+  let searchAbort = null;
+  async function searchChannels(prefix) {
+    // Vorigen Request abbrechen, damit ältere Antworten neuere nicht überschreiben können
+    if (searchAbort) searchAbort.abort();
+    if (!prefix.trim()) {
+      searchResults = [];
+      renderResults();
+      return;
+    }
+    searchAbort = new AbortController();
+    try {
+      const r = await fetch('/api/channel-search?q=' + encodeURIComponent(prefix),
+                            { cache: 'no-store', signal: searchAbort.signal });
+      const data = await r.json();
+      searchResults = data.results || [];
+      renderResults();
+    } catch (e) {
+      if (e.name !== 'AbortError') {
+        searchResults = [];
+        renderResults();
+      }
+    }
+  }
+
+  document.getElementById('ch-search-input').addEventListener('input', (e) => {
+    clearTimeout(searchTimer);
+    const val = e.target.value;
+    searchTimer = setTimeout(() => searchChannels(val), 250);
+  });
+
+  // === Pause / Resume ===
+  document.getElementById('pause-btn').addEventListener('click', () => {
+    const btn = document.getElementById('pause-btn');
+    const currentlyPaused = btn.dataset.paused === '1';
+    const url = currentlyPaused ? '/api/resume' : '/api/pause';
+    withLoading(btn, async () => {
+      try {
+        const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || 'HTTP ' + r.status);
+        updatePauseButton(!!data.paused);
+      } catch (e) {
+        alert('Fehler: ' + e.message);
+      }
+    });
+  });
+
+  // === Bot-Config (Intervalle + Tageslimit) ===
+  let serverCfg = {};
+
+  function checkCfgDirty() {
+    const ids = { spam_interval: 'cfg-spam', msg_interval: 'cfg-msg', pn_interval: 'cfg-pn', daily_pn_limit: 'cfg-limit' };
+    let dirty = false;
+    Object.entries(ids).forEach(([key, id]) => {
+      const el = document.getElementById(id);
+      const v = parseInt(el.value, 10);
+      const changed = !isNaN(v) && v !== serverCfg[key];
+      el.classList.toggle('dirty', changed);
+      if (changed) dirty = true;
+    });
+    document.getElementById('cfg-save-btn').disabled = !dirty;
+  }
+
+  function showCfgStatus(text, cls) {
+    const el = document.getElementById('cfg-save-status');
+    el.textContent = text;
+    el.className = 'save-status visible ' + (cls || '');
+    setTimeout(() => el.classList.remove('visible'), 2500);
+  }
+
+  async function loadBotConfig() {
+    try {
+      const r = await fetch('/api/bot-config', { cache: 'no-store' });
+      const data = await r.json();
+      serverCfg = data;
+      document.getElementById('cfg-spam').value = data.spam_interval ?? 120;
+      document.getElementById('cfg-msg').value = data.msg_interval ?? 30;
+      document.getElementById('cfg-pn').value = data.pn_interval ?? 30;
+      document.getElementById('cfg-limit').value = data.daily_pn_limit ?? 0;
+      checkCfgDirty();
+    } catch (e) {
+      showCfgStatus('Load fail', 'err');
+    }
+  }
+
+  async function saveBotConfig() {
+    const payload = {
+      spam_interval: parseInt(document.getElementById('cfg-spam').value, 10),
+      msg_interval: parseInt(document.getElementById('cfg-msg').value, 10),
+      pn_interval: parseInt(document.getElementById('cfg-pn').value, 10),
+      daily_pn_limit: parseInt(document.getElementById('cfg-limit').value, 10),
+    };
+    const btn = document.getElementById('cfg-save-btn');
+    await withLoading(btn, async () => {
+      showCfgStatus('Speichere…', '');
+      try {
+        const r = await fetch('/api/bot-config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await r.json();
+        if (!r.ok || data.error) throw new Error(data.error || 'HTTP ' + r.status);
+        serverCfg = data.config || payload;
+        checkCfgDirty();
+        showCfgStatus('Gespeichert ✓', 'ok');
+      } catch (e) {
+        showCfgStatus('Fehler: ' + e.message, 'err');
+      }
+    });
+  }
+
+  ['cfg-spam', 'cfg-msg', 'cfg-pn', 'cfg-limit'].forEach(id => {
+    document.getElementById(id).addEventListener('input', checkCfgDirty);
+  });
+  document.getElementById('cfg-save-btn').addEventListener('click', saveBotConfig);
+
+  // === Forget-User ===
+  async function forgetUser() {
+    const input = document.getElementById('forget-input');
+    const uid = input.value.trim();
+    if (!uid) return;
+    const statusEl = document.getElementById('forget-status');
+    const btn = document.getElementById('forget-btn');
+    await withLoading(btn, async () => {
+      try {
+        const r = await fetch('/api/forget-user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: uid })
+        });
+        const data = await r.json();
+        if (!r.ok || data.error) throw new Error(data.error || 'HTTP ' + r.status);
+        statusEl.textContent = data.removed ? `User ${uid} entfernt ✓` : `User ${uid} war nicht in DB`;
+        statusEl.className = 'save-status visible ' + (data.removed ? 'ok' : '');
+        setTimeout(() => statusEl.classList.remove('visible'), 2500);
+        input.value = '';
+      } catch (e) {
+        statusEl.textContent = 'Fehler: ' + e.message;
+        statusEl.className = 'save-status visible err';
+        setTimeout(() => statusEl.classList.remove('visible'), 2500);
+      }
+    });
+  }
+  document.getElementById('forget-btn').addEventListener('click', forgetUser);
+  document.getElementById('forget-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') forgetUser();
+  });
+
+  // === Account-Modal ===
+  let currentNick = null;
+
+  function openAccountModal() {
+    document.getElementById('account-modal').style.display = 'flex';
+    document.getElementById('add-user').value = '';
+    document.getElementById('add-pw').value = '';
+    document.getElementById('add-error').textContent = '';
+    loadAccountList();
+    document.getElementById('add-user').focus();
+  }
+
+  function closeAccountModal() {
+    document.getElementById('account-modal').style.display = 'none';
+  }
+
+  async function loadAccountList() {
+    const list = document.getElementById('account-list');
+    try {
+      const r = await fetch('/api/accounts', { cache: 'no-store' });
+      const data = await r.json();
+      currentNick = data.current;
+      const accounts = data.accounts || [];
+      if (!accounts.length) {
+        list.innerHTML = '<div style="color:var(--text-dim);font-size:13px;font-style:italic;">Noch keine weiteren Accounts gespeichert.</div>';
+        return;
+      }
+      list.innerHTML = accounts.map(nick => {
+        const active = nick === currentNick;
+        return `<div class="account-item${active ? ' active' : ''}" data-nick="${escapeHtml(nick)}">
+          <span>${escapeHtml(nick)}</span>
+          ${active ? '<span class="account-badge">aktiv</span>' : '<span style="font-size:12px;color:var(--text-muted);">Wechseln →</span>'}
+        </div>`;
+      }).join('');
+      list.querySelectorAll('.account-item:not(.active)').forEach(el => {
+        el.addEventListener('click', () => switchAccount(el.dataset.nick));
+      });
+    } catch (e) {
+      list.innerHTML = '<div style="color:var(--fail);font-size:13px;">Laden fehlgeschlagen</div>';
+    }
+  }
+
+  async function switchAccount(nick) {
+    const list = document.getElementById('account-list');
+    list.style.opacity = '0.5';
+    list.style.pointerEvents = 'none';
+    try {
+      const r = await fetch('/api/switch-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nick })
+      });
+      const data = await r.json();
+      if (!r.ok || data.error) throw new Error(data.error || 'HTTP ' + r.status);
+      closeAccountModal();
+      seenInbox.clear(); seenSent.clear(); seenPn.clear();
+      firstLoad = true;
+    } catch (e) {
+      list.style.opacity = '';
+      list.style.pointerEvents = '';
+      document.getElementById('add-error').textContent = 'Fehler: ' + e.message;
+    }
+  }
+
+  async function addAccount() {
+    const username = document.getElementById('add-user').value.trim();
+    const password = document.getElementById('add-pw').value.trim();
+    const errEl = document.getElementById('add-error');
+    const btn = document.getElementById('add-account-btn');
+    if (!username || !password) {
+      errEl.textContent = 'Nick und Passwort erforderlich';
+      return;
+    }
+    errEl.textContent = '';
+    await withLoading(btn, async () => {
+      try {
+        const r = await fetch('/api/add-account', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await r.json();
+        if (!r.ok || data.error) throw new Error(data.error || 'HTTP ' + r.status);
+        closeAccountModal();
+        seenInbox.clear(); seenSent.clear(); seenPn.clear();
+        firstLoad = true;
+      } catch (e) {
+        errEl.textContent = e.message;
+      }
+    });
+  }
+
+  document.getElementById('account-btn').addEventListener('click', openAccountModal);
+  document.getElementById('modal-close').addEventListener('click', closeAccountModal);
+  document.getElementById('account-modal').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('account-modal')) closeAccountModal();
+  });
+  document.getElementById('add-account-btn').addEventListener('click', addAccount);
+  document.getElementById('add-pw').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') addAccount();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeAccountModal();
+  });
+
+  loadMessages();
+  loadPnText();
+  loadChannelGroups();
+  loadBotConfig();
+  poll();
+  setInterval(poll, POLL_MS);
+</script>
+
+</body>
+</html>
