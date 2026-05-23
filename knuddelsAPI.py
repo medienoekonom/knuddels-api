@@ -417,15 +417,27 @@ class KnuddelsAPI:
             Removes a conversation from your inbox.
         """
         headers={"authorization": "Bearer "+self.sessionToken, "content-type": "application/json"}
-        params = {"operationName":"ArchiveConversation","variables":{"id":conversationID},"query":"mutation ArchiveConversation($id: ID!) {\n  messenger {\n    archiveConversation(id: $id) {\n      error\n      conversation {\n        id\n        isArchived\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}\n"}
+        params = {"operationName":"ArchiveConversation","variables":{"id":conversationID},"query":"mutation ArchiveConversation($id: ID!) {\n  messenger {\n    archiveConversation(id: $id) {\n      error\n      conversation {\n        id\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}\n"}
         req = requests.post('https://api-de.knuddels.de/mono/graphql', data=json.dumps(params), headers=headers)
         req.raise_for_status()
-        
+        body = req.json()
+        if body.get("errors"):
+            raise RuntimeError(f"archiveConversation GraphQL error: {body['errors']}")
+        err = body["data"]["messenger"]["archiveConversation"].get("error")
+        if err:
+            raise RuntimeError(f"archiveConversation failed for {conversationID}: {err}")
+
     def unArchiveConversation(self, conversationID: str) -> None:
         headers={"authorization": "Bearer "+self.sessionToken, "content-type": "application/json"}
-        params = {"operationName":"UnArchiveConversation","variables":{"id":conversationID},"query":"mutation UnArchiveConversation($id: ID!) {\n  messenger {\n    unarchiveConversation(id: $id) {\n      error\n      conversation {\n        id\n        isArchived\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}\n"}
+        params = {"operationName":"UnArchiveConversation","variables":{"id":conversationID},"query":"mutation UnArchiveConversation($id: ID!) {\n  messenger {\n    unarchiveConversation(id: $id) {\n      error\n      conversation {\n        id\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}\n"}
         req = requests.post('https://api-de.knuddels.de/mono/graphql', data=json.dumps(params), headers=headers)
         req.raise_for_status()
+        body = req.json()
+        if body.get("errors"):
+            raise RuntimeError(f"unArchiveConversation GraphQL error: {body['errors']}")
+        err = body["data"]["messenger"]["unarchiveConversation"].get("error")
+        if err:
+            raise RuntimeError(f"unArchiveConversation failed for {conversationID}: {err}")
         
     def allowImages(self, userID: str) -> None:
         headers={"authorization": "Bearer "+self.sessionToken, "content-type": "application/json"}
